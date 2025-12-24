@@ -674,8 +674,8 @@
 
             canvas.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                for (let i = 0; i < e.touches.length; i++) {
-                    handlePointerAtClientX(e.touches[i].clientX);
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    handlePointerAtClientX(e.changedTouches[i].clientX);
                 }
             }, { passive: false });
 
