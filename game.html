@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Split Focus</title>
+    <style>
+        :root {
+            --vh: 1vh;
+            --bg: #050509;
+            --fg: #f5f5f5;
+            --muted: rgba(245, 245, 245, 0.7);
+            --border: rgba(255, 255, 255, 0.14);
+            --accent: #ffcc55;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            color: var(--fg);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            overflow: hidden;
+            height: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #gameContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: calc(var(--vh) * 100);
+            padding: 10px;
+            box-sizing: border-box;
+            gap: 8px;
+        }
+
+        #ui {
+            width: min(640px, 96vw);
+            text-align: center;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        #ui h1 {
+            margin: 6px 0 2px;
+            font-size: 18px;
+            letter-spacing: 0.8px;
+        }
+
+        #ui p {
+            margin: 2px 0;
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.25;
+        }
+
+        #topRow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        #scoreRow {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            font-size: 14px;
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.18);
+        }
+
+        #btnRow {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button {
+            appearance: none;
+            border: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.22);
+            color: var(--fg);
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        #message {
+            margin-top: 6px;
+            font-size: 14px;
+            color: var(--accent);
+            min-height: 18px;
+        }
+
+        .orientHint {
+            margin: 8px auto 0;
+            width: fit-content;
+            max-width: 100%;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 204, 85, 0.35);
+            background: rgba(255, 204, 85, 0.10);
+            color: rgba(255, 240, 210, 0.95);
+            font-size: 12.5px;
+            line-height: 1.25;
+        }
+
+        .orientHint b {
+            color: rgba(255, 230, 170, 1);
+        }
+
+        #history {
+            margin-top: 6px;
+            font-size: 13px;
+            color: var(--muted);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        #historyList {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .chip {
+            border: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.18);
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 12px;
+            color: rgba(245, 245, 245, 0.85);
+        }
+
+        #gameCanvas {
+            width: min(640px, 96vw);
+            height: min(78vh, 860px);
+            border: 2px solid rgba(255, 255, 255, 0.18);
+            border-radius: 14px;
+            background: radial-gradient(circle at top, #181830 0, #050509 60%);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+            touch-action: none;
+            display: block;
+        }
+
+        @media (max-width: 420px) {
+            #ui h1 {
+                font-size: 16px;
+            }
+
+            #scoreRow {
+                font-size: 13px;
+            }
+
+            button {
+                padding: 10px 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="gameContainer">
+        <div id="ui">
+            <h1>Split Focus</h1>
+            <p>Controls: <b>A</b> for Left, <b>L</b> for Right • <b>P</b> to Pause • Or tap each half</p>
+
+            <div id="orientHint" class="orientHint" style="display:none" role="status" aria-live="polite">
+                Best experienced in <b>portrait</b>. Rotate your phone for a clearer view.
+            </div>
+
+            <div id="topRow">
+                <div id="scoreRow">
+                    <span>Score: <span id="score">0</span></span>
+                    <span>Best: <span id="bestScore">0</span></span>
+                </div>
+                <div id="btnRow">
+                    <button id="pauseBtn" aria-label="Pause">Pause</button>
+                    <button id="restartBtn" aria-label="Restart">Restart</button>
+                </div>
+            </div>
+
+            <div id="message"></div>
+
+            <div id="history">
+                <div class="hint">Last 5 tries</div>
+                <div id="historyList"></div>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <script>
+        (function () {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+
+            const scoreEl = document.getElementById('score');
+            const bestScoreEl = document.getElementById('bestScore');
+            const messageEl = document.getElementById('message');
+            const historyListEl = document.getElementById('historyList');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const restartBtn = document.getElementById('restartBtn');
+            const orientHintEl = document.getElementById('orientHint');
+
+            // Persisted data
+            const BEST_KEY = 'splitFocusBestScore';
+            const HIST_KEY = 'splitFocusLast5';
+
+            let bestScore = parseFloat(localStorage.getItem(BEST_KEY) || '0');
+            bestScoreEl.textContent = Math.floor(bestScore);
+
+            function loadHistory() {
+                try {
+                    const raw = localStorage.getItem(HIST_KEY);
+                    const arr = raw ? JSON.parse(raw) : [];
+                    return Array.isArray(arr) ? arr : [];
+                } catch {
+                    return [];
+                }
+            }
+
+            function saveHistory(arr) {
+                localStorage.setItem(HIST_KEY, JSON.stringify(arr.slice(0, 5)));
+            }
+
+            function renderHistory() {
+                const hist = loadHistory();
+                historyListEl.innerHTML = '';
+                if (hist.length === 0) {
+                    const chip = document.createElement('span');
+                    chip.className = 'chip';
+                    chip.textContent = '—';
+                    historyListEl.appendChild(chip);
+                    return;
+                }
+                hist.forEach(s => {
+                    const chip = document.createElement('span');
+                    chip.className = 'chip';
+                    chip.textContent = String(s);
+                    historyListEl.appendChild(chip);
+                });
+            }
+
+            function recordScore(s) {
+                const hist = loadHistory();
+                hist.unshift(s);
+                saveHistory(hist);
+                renderHistory();
+            }
+
+            renderHistory();
+
+            // --- Mobile viewport robustness (address-bar / dynamic viewport height) ---
+            function viewportSize() {
+                const w = (window.visualViewport && window.visualViewport.width) ? window.visualViewport.width : window.innerWidth;
+                const h = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
+                return { w, h };
+            }
+
+            function setVhVar() {
+                const { h } = viewportSize();
+                document.documentElement.style.setProperty('--vh', `${h * 0.01}px`);
+            }
+
+            function updateOrientationHint() {
+                const { w, h } = viewportSize();
+                const isLandscape = w > h;
+                const cramped = h < 520;
+                orientHintEl.style.display = (isLandscape && cramped) ? 'block' : 'none';
+            }
+
+            // --- Responsive, crisp canvas (avoid ResizeObserver loop) ---
+            let W = 500;
+            let H = 700;
+            let laneWidth = W / 4;
+
+            let resizeScheduled = false;
+            let lastCssW = 0;
+            let lastCssH = 0;
+
+            function resizeCanvasNow() {
+                resizeScheduled = false;
+
+                // Use bounding rect to reduce feedback loops vs clientWidth/clientHeight
+                const rect = canvas.getBoundingClientRect();
+                const cssW = Math.max(1, Math.floor(rect.width));
+                const cssH = Math.max(1, Math.floor(rect.height));
+
+                // Bail if nothing actually changed
+                if (cssW === lastCssW && cssH === lastCssH) return;
+                lastCssW = cssW;
+                lastCssH = cssH;
+
+                const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+                const targetW = Math.floor(cssW * dpr);
+                const targetH = Math.floor(cssH * dpr);
+
+                // Only set when needed (setting width/height can trigger layout)
+                if (canvas.width !== targetW) canvas.width = targetW;
+                if (canvas.height !== targetH) canvas.height = targetH;
+
+                // Render in CSS pixel space
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                W = cssW;
+                H = cssH;
+                laneWidth = W / 4;
+            }
+
+            function scheduleResize() {
+                if (resizeScheduled) return;
+                resizeScheduled = true;
+                requestAnimationFrame(() => {
+                    setVhVar();
+                    updateOrientationHint();
+                    resizeCanvasNow();
+                });
+            }
+
+            // Prefer ResizeObserver if available, but schedule resize via rAF to avoid loop warnings.
+            let ro = null;
+            if (window.ResizeObserver) {
+                ro = new ResizeObserver(() => scheduleResize());
+                // Observe parent container instead of canvas to avoid canvas size mutations feeding back.
+                ro.observe(document.getElementById('gameContainer'));
+            }
+
+            window.addEventListener('resize', scheduleResize);
+            window.addEventListener('orientationchange', scheduleResize);
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', scheduleResize);
+                window.visualViewport.addEventListener('scroll', scheduleResize);
+            }
+
+            // Initial sizing
+            scheduleResize();
+
+            // Game state
+            let leftLaneIndex = 0;
+            let rightLaneIndex = 0;
+
+            let obstacles = [];
+            let lastSpawnTime = 0;
+            let spawnInterval = 900;
+            let baseSpeed = 2.2;
+            let speedMultiplier = 1;
+            let running = false;
+            let paused = false;
+            let gameOver = false;
+            let lastTime = 0;
+            let score = 0;
+
+            function playerRect(isLeftSide) {
+                const playerY = H - Math.max(56, H * 0.08);
+                const pw = laneWidth * 0.72;
+                const ph = Math.max(18, H * 0.026);
+                const laneIndex = isLeftSide ? leftLaneIndex : rightLaneIndex;
+                return {
+                    x: getLaneX(isLeftSide, laneIndex) + laneWidth * 0.02,
+                    y: playerY,
+                    width: pw,
+                    height: ph
+                };
+            }
+
+            function resetGame() {
+                obstacles = [];
+                leftLaneIndex = 0;
+                rightLaneIndex = 0;
+                spawnInterval = 900;
+                baseSpeed = 2.2;
+                speedMultiplier = 1;
+                score = 0;
+                scoreEl.textContent = '0';
+                gameOver = false;
+                paused = false;
+                running = true;
+                pauseBtn.textContent = 'Pause';
+                messageEl.textContent = '';
+                lastTime = performance.now();
+                lastSpawnTime = lastTime;
+            }
+
+            function startIfNotRunning() {
+                if (!running) resetGame();
+            }
+
+            function togglePause() {
+                if (!running) return;
+                paused = !paused;
+                pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+                messageEl.textContent = paused ? 'Paused' : '';
+                lastTime = performance.now();
+            }
+
+            function getLaneX(isLeftSide, laneIndex) {
+                const globalLaneIndex = isLeftSide ? laneIndex : laneIndex + 2;
+                return globalLaneIndex * laneWidth + laneWidth * 0.15;
+            }
+
+            function spawnObstacle(now) {
+                const pr = playerRect(true);
+                const obW = pr.width;
+                const obH = pr.height;
+
+                function pickLaneSafe(isLeftSide, proposedLane) {
+                    const newY = -obH - 10;
+                    const otherLane = 1 - proposedLane;
+
+                    let minOtherY = Infinity;
+                    for (const ob of obstacles) {
+                        if (ob.isLeftSide === isLeftSide && ob.laneIndex === otherLane) {
+                            if (ob.y < minOtherY) minOtherY = ob.y;
+                        }
+                    }
+
+                    const safeGap = Math.max(14, obH * 0.8);
+                    const minAllowedOtherY = newY + obH + safeGap;
+                    if (minOtherY < minAllowedOtherY) return otherLane;
+                    return proposedLane;
+                }
+
+                [true, false].forEach(isLeftSide => {
+                    let laneIndex = Math.random() < 0.5 ? 0 : 1;
+                    laneIndex = pickLaneSafe(isLeftSide, laneIndex);
+                    obstacles.push({
+                        isLeftSide,
+                        laneIndex,
+                        x: getLaneX(isLeftSide, laneIndex) + laneWidth * 0.02,
+                        y: -obH - 10,
+                        width: obW,
+                        height: obH,
+                    });
+                });
+
+                lastSpawnTime = now;
+            }
+
+            function rectsOverlap(a, b) {
+                return !(a.x + a.width < b.x || a.x > b.x + b.width || a.y + a.height < b.y || a.y > b.y + b.height);
+            }
+
+            function update(dt, now) {
+                if (!running || paused) return;
+
+                const timeSeconds = score / 100;
+                speedMultiplier = 1 + timeSeconds * 0.12;
+                spawnInterval = Math.max(250, 900 - timeSeconds * 50);
+                const speed = baseSpeed * speedMultiplier;
+
+                score += dt * 0.1 * speedMultiplier;
+                scoreEl.textContent = Math.floor(score);
+
+                if (now - lastSpawnTime > spawnInterval) spawnObstacle(now);
+
+                const leftPlayer = playerRect(true);
+                const rightPlayer = playerRect(false);
+
+                for (let i = obstacles.length - 1; i >= 0; i--) {
+                    const ob = obstacles[i];
+                    ob.y += speed * dt * 0.06;
+
+                    if (ob.isLeftSide) {
+                        if (rectsOverlap(ob, leftPlayer)) { endGame(); return; }
+                    } else {
+                        if (rectsOverlap(ob, rightPlayer)) { endGame(); return; }
+                    }
+
+                    if (ob.y > H + 80) obstacles.splice(i, 1);
+                }
+            }
+
+            function endGame() {
+                running = false;
+                gameOver = true;
+                paused = false;
+                pauseBtn.textContent = 'Pause';
+
+                const finalScore = Math.floor(score);
+                recordScore(finalScore);
+
+                if (finalScore > Math.floor(bestScore)) {
+                    bestScore = finalScore;
+                    localStorage.setItem(BEST_KEY, String(bestScore));
+                    bestScoreEl.textContent = String(bestScore);
+                    messageEl.textContent = 'New High Score! Tap or press A/L to restart.';
+                } else {
+                    messageEl.textContent = 'Game Over. Tap or press A/L to restart.';
+                }
+            }
+
+            // Drawing
+            function roundRect(x, y, w, h, r) {
+                const rr = Math.min(r, w / 2, h / 2);
+                ctx.beginPath();
+                ctx.moveTo(x + rr, y);
+                ctx.arcTo(x + w, y, x + w, y + h, rr);
+                ctx.arcTo(x + w, y + h, x, y + h, rr);
+                ctx.arcTo(x, y + h, x, y, rr);
+                ctx.arcTo(x, y, x + w, y, rr);
+                ctx.closePath();
+            }
+
+            function drawPlayer(x, y, w, h, color) {
+                const r = Math.min(10, h * 0.35);
+                ctx.fillStyle = color;
+                roundRect(x, y, w, h, r);
+                ctx.fill();
+
+                ctx.fillStyle = 'rgba(255,255,255,0.12)';
+                roundRect(x + w * 0.06, y + h * 0.18, w * 0.55, h * 0.18, r);
+                ctx.fill();
+            }
+
+            function drawObstacle(x, y, w, h, color) {
+                const r = Math.min(10, h * 0.35);
+                ctx.fillStyle = color;
+                roundRect(x, y, w, h, r);
+                ctx.fill();
+
+                ctx.fillStyle = 'rgba(0,0,0,0.18)';
+                roundRect(x + w * 0.12, y + h * 0.22, w * 0.18, h * 0.56, r);
+                ctx.fill();
+            }
+
+            function render() {
+                ctx.clearRect(0, 0, W, H);
+
+                ctx.fillStyle = '#101020';
+                ctx.fillRect(0, 0, W / 2, H);
+                ctx.fillStyle = '#141424';
+                ctx.fillRect(W / 2, 0, W / 2, H);
+
+                ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+                ctx.lineWidth = 2;
+                for (let i = 1; i < 4; i++) {
+                    const x = i * laneWidth;
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, H);
+                    ctx.stroke();
+                }
+
+                ctx.fillStyle = 'rgba(255,255,255,0.06)';
+                ctx.fillRect(W / 2 - 2, 0, 4, H);
+
+                const lp = playerRect(true);
+                const rp = playerRect(false);
+                drawPlayer(lp.x, lp.y, lp.width, lp.height, '#55ddff');
+                drawPlayer(rp.x, rp.y, rp.width, rp.height, '#ff6688');
+
+                obstacles.forEach(ob => {
+                    const c = ob.isLeftSide ? 'rgba(120,220,255,0.85)' : 'rgba(255,160,190,0.88)';
+                    drawObstacle(ob.x, ob.y, ob.width, ob.height, c);
+                });
+
+                if (paused) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+                    ctx.fillRect(0, 0, W, H);
+                    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                    ctx.font = 'bold 28px system-ui, -apple-system, Segoe UI, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('Paused', W / 2, H / 2);
+                    ctx.font = '14px system-ui, -apple-system, Segoe UI, sans-serif';
+                    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                    ctx.fillText('Press P or tap Pause to continue', W / 2, H / 2 + 34);
+                }
+
+                if (!running && !gameOver) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+                    ctx.fillRect(0, 0, W, H);
+                    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                    ctx.font = 'bold 22px system-ui, -apple-system, Segoe UI, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('Tap left/right to start', W / 2, H / 2);
+                    ctx.font = '14px system-ui, -apple-system, Segoe UI, sans-serif';
+                    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                    ctx.fillText('A toggles left • L toggles right • P pauses', W / 2, H / 2 + 30);
+                }
+            }
+
+            function loop(now) {
+                requestAnimationFrame(loop);
+                const dt = (now - lastTime) || 16;
+                lastTime = now;
+                update(dt, now);
+                render();
+            }
+
+            // Input
+            function toggleLeft() { leftLaneIndex = 1 - leftLaneIndex; }
+            function toggleRight() { rightLaneIndex = 1 - rightLaneIndex; }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat) return;
+
+                if (e.key === 'p' || e.key === 'P') {
+                    togglePause();
+                    return;
+                }
+
+                if (e.key === 'a' || e.key === 'A') {
+                    if (!running) startIfNotRunning();
+                    else if (!paused) toggleLeft();
+                    return;
+                }
+
+                if (e.key === 'l' || e.key === 'L') {
+                    if (!running) startIfNotRunning();
+                    else if (!paused) toggleRight();
+                    return;
+                }
+            });
+
+            pauseBtn.addEventListener('click', () => {
+                if (!running) return;
+                togglePause();
+            });
+
+            restartBtn.addEventListener('click', () => {
+                resetGame();
+            });
+
+            function getCanvasXFromEvent(clientX) {
+                const rect = canvas.getBoundingClientRect();
+                const x = clientX - rect.left;
+                const scaleX = W / rect.width;
+                return x * scaleX;
+            }
+
+            function handlePointerAtClientX(clientX) {
+                if (!running) { startIfNotRunning(); return; }
+                if (paused) return;
+
+                const x = getCanvasXFromEvent(clientX);
+                if (x < W / 2) toggleLeft();
+                else toggleRight();
+            }
+
+            canvas.addEventListener('mousedown', (e) => {
+                handlePointerAtClientX(e.clientX);
+            });
+
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (e.touches.length > 0) handlePointerAtClientX(e.touches[0].clientX);
+            }, { passive: false });
+
+            // Initial UI message
+            messageEl.textContent = 'Tap or press A/L to start.';
+
+            // --- Self-tests (lightweight) ---
+            // Ensures we don't create two-lane walls near the spawn band.
+            // Runs once; logs only on failure.
+            function runSelfTests() {
+                try {
+                    // Fake a tiny environment
+                    W = 500; H = 700; laneWidth = W / 4;
+                    obstacles = [];
+                    leftLaneIndex = 0; rightLaneIndex = 0;
+
+                    // Force repeated spawns; check that on each side, you never have both lanes occupied with too-small vertical gap near the top.
+                    const iterations = 200;
+                    const pr = playerRect(true);
+                    const obH = pr.height;
+                    const safeGap = Math.max(14, obH * 0.8);
+                    const newY = -obH - 10;
+                    const minAllowedOtherY = newY + obH + safeGap;
+
+                    for (let i = 0; i < iterations; i++) {
+                        spawnObstacle(performance.now());
+                        for (const side of [true, false]) {
+                            const lane0 = obstacles.filter(o => o.isLeftSide === side && o.laneIndex === 0).map(o => o.y);
+                            const lane1 = obstacles.filter(o => o.isLeftSide === side && o.laneIndex === 1).map(o => o.y);
+                            const min0 = lane0.length ? Math.min(...lane0) : Infinity;
+                            const min1 = lane1.length ? Math.min(...lane1) : Infinity;
+                            // If both lanes have an obstacle very near top, ensure at least one isn't too close (otherwise it's a wall).
+                            if (min0 < minAllowedOtherY && min1 < minAllowedOtherY) {
+                                throw new Error('Self-test failed: potential two-lane wall detected.');
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            runSelfTests();
+
+            // Start loop
+            requestAnimationFrame((t) => {
+                lastTime = t;
+                lastSpawnTime = t;
+                requestAnimationFrame(loop);
+            });
+        })();
+    </script>
+</body>
+
+</html>
