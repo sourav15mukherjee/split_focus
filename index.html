@@ -5,14 +5,49 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Split Focus</title>
+    <!-- Social Meta Tags -->
+    <meta property="og:title" content="Split Focus - Dual Lane Survival" />
+    <meta property="og:description"
+        content="Test your reflexes! Control two players simultaneously and survive the falling neon blocks." />
+    <meta property="og:image" content="https://placehold.co/1200x630/101020/ffcc55?text=Split+Focus" />
+    <meta property="og:url" content="https://split-focus.game" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Google Analytics 4 (Placeholder) -->
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NTX74GN87P"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-NTX74GN87P');
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+
+
+    <!-- Microsoft Clarity (Placeholder) -->
+    <script type="text/javascript">
+        (function (c, l, a, r, i, t, y) {
+            c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
+            t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+            y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+        })(window, document, "clarity", "script", "v0fv4htbhm");
+    </script>
+
     <style>
         :root {
             --vh: 1vh;
             --bg: #050509;
             --fg: #f5f5f5;
-            --muted: rgba(245, 245, 245, 0.7);
-            --border: rgba(255, 255, 255, 0.14);
+            --muted: rgba(245, 245, 245, 0.6);
+            --border: rgba(255, 255, 255, 0.1);
             --accent: #ffcc55;
+            --glass: rgba(255, 255, 255, 0.05);
         }
 
         html,
@@ -21,7 +56,7 @@
             padding: 0;
             background: var(--bg);
             color: var(--fg);
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
             overflow: hidden;
             height: 100%;
             -webkit-tap-highlight-color: transparent;
@@ -91,18 +126,168 @@
         button {
             appearance: none;
             border: 1px solid var(--border);
-            background: rgba(0, 0, 0, 0.22);
+            background: rgba(0, 0, 0, 0.4);
             color: var(--fg);
             padding: 8px 12px;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 13px;
             cursor: pointer;
+            transition: all 0.15s ease;
             user-select: none;
             touch-action: manipulation;
+            font-family: inherit;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
         button:active {
-            transform: translateY(1px);
+            transform: scale(0.96);
+        }
+
+        .btn-accent {
+            background: rgba(255, 204, 85, 0.15);
+            border-color: rgba(255, 204, 85, 0.4);
+            color: #ffda80;
+        }
+
+        .btn-coffee {
+            background: #FFDD00;
+            color: #000;
+            border: none;
+            font-weight: 600;
+        }
+
+        /* Enhanced Game Over Screen */
+        #gameOverOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 9, 0.9);
+            backdrop-filter: blur(12px);
+            display: none;
+            /* Toggled via JS */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #gameOverOverlay.visible {
+            opacity: 1;
+        }
+
+        .stats-card {
+            background: linear-gradient(145deg, rgba(30, 30, 45, 0.9), rgba(20, 20, 30, 0.95));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 28px;
+            width: min(340px, 88%);
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            transform: translateY(10px);
+            animation: slideUp 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+        }
+
+        @keyframes slideUp {
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 4px 0;
+        }
+
+        .stat-item {
+            background: rgba(0, 0, 0, 0.25);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-val {
+            font-size: 24px;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .share-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .share-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 44px;
+            border-radius: 10px;
+            border: none;
+            font-size: 20px;
+            color: white;
+            transition: transform 0.1s;
+        }
+
+        .btn-x {
+            background: #000;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-wa {
+            background: #25D366;
+        }
+
+        .btn-copy {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .share-btn:active {
+            transform: scale(0.94);
+        }
+
+        #shareMsg {
+            grid-column: span 3;
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: -6px;
+        }
+
+        /* Footer */
+        #footer {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         #message {
@@ -205,10 +390,63 @@
                 <div id="btnRow">
                     <button id="pauseBtn" aria-label="Pause">Pause</button>
                     <button id="restartBtn" aria-label="Restart">Restart</button>
+                    <button id="muteBtn" aria-label="Mute Audio">🔊</button>
                 </div>
             </div>
 
             <div id="message"></div>
+
+            <!-- New Game Over Overlay -->
+            <div id="gameOverOverlay">
+                <div class="stats-card">
+                    <h2
+                        style="margin:0; font-size:28px; font-weight:800; background:linear-gradient(to right, #fff, #bbb); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+                        Game Over</h2>
+
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-val" id="finalScore" style="color:var(--accent);">0</div>
+                            <div class="stat-label">Score</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-val" id="finalHigh">0</div>
+                            <div class="stat-label">Best</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-val" id="statSwaps">0</div>
+                            <div class="stat-label">Swaps</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-val" id="statDodged">0</div>
+                            <div class="stat-label">Dodged</div>
+                        </div>
+                    </div>
+
+                    <button id="reviveBtn" class="btn-accent"
+                        style="display:none; width:100%; justify-content:center; font-weight:600; padding:12px;">
+                        📺 Watch Ad to Revive
+                    </button>
+
+                    <div class="share-row">
+                        <link rel="stylesheet"
+                            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+                        <button id="btnTwitter" class="share-btn btn-x" aria-label="Share on X">𝕏</button>
+                        <button id="btnWhatsapp" class="share-btn btn-wa" aria-label="Share on WhatsApp">💬</button>
+                        <button id="btnCopy" class="share-btn btn-copy" aria-label="Copy Link">📋</button>
+                    </div>
+                    <div id="shareMsg">Share your score</div>
+
+                    <button id="restartOverlayBtn" style="padding:12px; font-weight:600; font-family:inherit;">
+                        ↺ Play Again
+                    </button>
+                </div>
+            </div>
+
+            <div id="footer">
+                <a href="#" target="_blank" class="btn-coffee"
+                    style="text-decoration:none; padding:8px 12px; border-radius:8px; font-size:12px;">☕ Buy me a
+                    Coffee</a>
+            </div>
 
             <div id="history">
                 <div class="hint">Last 5 tries</div>
@@ -231,6 +469,81 @@
             const pauseBtn = document.getElementById('pauseBtn');
             const restartBtn = document.getElementById('restartBtn');
             const orientHintEl = document.getElementById('orientHint');
+
+            // NEW UI References
+            const muteBtn = document.getElementById('muteBtn');
+            const gameOverOverlay = document.getElementById('gameOverOverlay');
+            const finalScoreEl = document.getElementById('finalScore');
+            const finalHighEl = document.getElementById('finalHigh');
+            const statSwapsEl = document.getElementById('statSwaps');
+            const statDodgedEl = document.getElementById('statDodged');
+            const reviveBtn = document.getElementById('reviveBtn');
+            const restartOverlayBtn = document.getElementById('restartOverlayBtn');
+
+            // --- AUDIO SYSTEM (Synthesized) ---
+            const Sound = {
+                ctx: null,
+                muted: false,
+                init: function () {
+                    if (!window.AudioContext) return;
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                },
+                play: function (type) {
+                    if (this.muted || !this.ctx) return;
+                    if (this.ctx.state === 'suspended') this.ctx.resume();
+
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    const now = this.ctx.currentTime;
+
+                    if (type === 'tap') {
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(600, now);
+                        osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+                        gain.gain.setValueAtTime(0.1, now);
+                        gain.gain.linearRampToValueAtTime(0, now + 0.1);
+                        osc.start(now);
+                        osc.stop(now + 0.1);
+                    } else if (type === 'crash') {
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(100, now);
+                        osc.frequency.exponentialRampToValueAtTime(20, now + 0.3);
+                        gain.gain.setValueAtTime(0.2, now);
+                        gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                        osc.start(now);
+                        osc.stop(now + 0.3);
+                    } else if (type === 'score') {
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(800, now);
+                        gain.gain.setValueAtTime(0.05, now);
+                        gain.gain.linearRampToValueAtTime(0, now + 0.1);
+                        osc.start(now);
+                        osc.stop(now + 0.1);
+                    } else if (type === 'revive') {
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(200, now);
+                        osc.frequency.linearRampToValueAtTime(600, now + 0.4);
+                        gain.gain.setValueAtTime(0.1, now);
+                        gain.gain.linearRampToValueAtTime(0, now + 0.4);
+                        osc.start(now);
+                        osc.stop(now + 0.4);
+                    }
+                },
+                toggle: function () {
+                    this.muted = !this.muted;
+                    muteBtn.textContent = this.muted ? '🔇' : '🔊';
+                }
+            };
+
+            muteBtn.addEventListener('click', (e) => {
+                e.target.blur(); // remove focus
+                Sound.init(); // lazy init
+                Sound.toggle();
+            });
+
 
             // Persisted data
             const BEST_KEY = 'splitFocusBestScore';
@@ -379,6 +692,17 @@
             let lastTime = 0;
             let score = 0;
 
+            // New Stats
+            let totalSwaps = 0;
+            let obstaclesDodged = 0;
+            let revivedUsed = false;
+            let invulnerableUntil = 0; // timestamp
+
+            // Visuals
+            let shakeTime = 0;
+            let particles = [];
+
+
             function playerRect(isLeftSide) {
                 const playerY = H - Math.max(56, H * 0.08);
                 const pw = laneWidth * 0.72;
@@ -400,14 +724,30 @@
                 baseSpeed = 2.2;
                 speedMultiplier = 1;
                 score = 0;
+                totalSwaps = 0;
+                obstaclesDodged = 0;
+                revivedUsed = false;
+                invulnerableUntil = 0;
+                particles = [];
+                shakeTime = 0;
+
                 scoreEl.textContent = '0';
                 gameOver = false;
                 paused = false;
                 running = true;
                 pauseBtn.textContent = 'Pause';
+
+                // Hide Overlay
+                gameOverOverlay.classList.remove('visible');
+                gameOverOverlay.style.display = 'none';
+
                 messageEl.textContent = '';
                 lastTime = performance.now();
                 lastSpawnTime = lastTime;
+
+                // Ensure audio init
+                Sound.init();
+
             }
 
             function startIfNotRunning() {
@@ -480,22 +820,53 @@
                 score += dt * 0.1 * speedMultiplier;
                 scoreEl.textContent = Math.floor(score);
 
+                // Audio Score Ping
+                if (Math.floor(score) > 0 && Math.floor(score) % 100 === 0 && Math.floor(score) !== Math.floor(score - dt * 0.1 * speedMultiplier)) {
+                    Sound.play('score');
+                }
+
                 if (now - lastSpawnTime > spawnInterval) spawnObstacle(now);
 
                 const leftPlayer = playerRect(true);
                 const rightPlayer = playerRect(false);
 
+                // Shake Decay
+                if (shakeTime > 0) shakeTime -= dt;
+
+                // Update Particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx * dt * 0.06;
+                    p.y += p.vy * dt * 0.06;
+                    p.life -= dt;
+                    if (p.life <= 0) particles.splice(i, 1);
+                }
+
                 for (let i = obstacles.length - 1; i >= 0; i--) {
                     const ob = obstacles[i];
                     ob.y += speed * dt * 0.06;
 
-                    if (ob.isLeftSide) {
-                        if (rectsOverlap(ob, leftPlayer)) { endGame(); return; }
-                    } else {
-                        if (rectsOverlap(ob, rightPlayer)) { endGame(); return; }
+                    // Invulnerability check
+                    const isInvulnerable = now < invulnerableUntil;
+
+                    if (!isInvulnerable) {
+                        if (ob.isLeftSide) {
+                            if (rectsOverlap(ob, leftPlayer)) {
+                                createExplosion(leftPlayer.x + leftPlayer.width / 2, leftPlayer.y + leftPlayer.height / 2, '#55ddff');
+                                endGame(); return;
+                            }
+                        } else {
+                            if (rectsOverlap(ob, rightPlayer)) {
+                                createExplosion(rightPlayer.x + rightPlayer.width / 2, rightPlayer.y + rightPlayer.height / 2, '#ff6688');
+                                endGame(); return;
+                            }
+                        }
                     }
 
-                    if (ob.y > H + 80) obstacles.splice(i, 1);
+                    if (ob.y > H + 80) {
+                        obstacles.splice(i, 1);
+                        obstaclesDodged++;
+                    }
                 }
             }
 
@@ -505,6 +876,9 @@
                 paused = false;
                 pauseBtn.textContent = 'Pause';
 
+                Sound.play('crash');
+                shakeTime = 500; // 500ms shake
+
                 const finalScore = Math.floor(score);
                 recordScore(finalScore);
 
@@ -512,10 +886,20 @@
                     bestScore = finalScore;
                     localStorage.setItem(BEST_KEY, String(bestScore));
                     bestScoreEl.textContent = String(bestScore);
-                    messageEl.textContent = 'New High Score! Tap or press A/L to restart.';
-                } else {
-                    messageEl.textContent = 'Game Over. Tap or press A/L to restart.';
                 }
+
+                // Show Overlay
+                finalScoreEl.textContent = finalScore;
+                finalHighEl.textContent = Math.floor(bestScore);
+                statSwapsEl.textContent = totalSwaps;
+                statDodgedEl.textContent = obstaclesDodged;
+
+                reviveBtn.style.display = revivedUsed ? 'none' : 'flex';
+
+                gameOverOverlay.style.display = 'flex';
+                // Trigger reflow
+                void gameOverOverlay.offsetWidth;
+                gameOverOverlay.classList.add('visible');
             }
 
             // Drawing
@@ -553,7 +937,41 @@
             }
 
             function render() {
+                ctx.setTransform(1, 0, 0, 1, 0, 0); // reset for clear
                 ctx.clearRect(0, 0, W, H);
+
+                // Shake Transform
+                let shakeX = 0;
+                let shakeY = 0;
+                if (shakeTime > 0) {
+                    const mag = (shakeTime / 500) * 10;
+                    shakeX = (Math.random() - 0.5) * mag;
+                    shakeY = (Math.random() - 0.5) * mag;
+                }
+
+                // Re-apply scale for standard drawing
+                const dpr = window.devicePixelRatio || 1;
+                // We need to fetch current scale; previously handled in resize.
+                // Simplified: Just use the stored scale if we can, 
+                // but simpler is to just apply shake in the draw calls or wrap logic.
+                // Let's use save/restore.
+
+                // Actually, resizeCanvasNow sets transform. We should rely on that or reset it.
+                // Since resizeCanvasNow is called on resize, the context already has a transform.
+                // Let's just modify the current transform? No, simplest is to save/restore.
+
+                // Wait, clearRect ignores transform? No.
+                // Let's assume standard flow:
+
+                // 1. Clear (using full canvas dims)
+                ctx.save();
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+
+                ctx.save();
+                // Apply Shake
+                ctx.translate(shakeX, shakeY);
 
                 ctx.fillStyle = '#101020';
                 ctx.fillRect(0, 0, W / 2, H);
@@ -573,15 +991,32 @@
                 ctx.fillStyle = 'rgba(255,255,255,0.06)';
                 ctx.fillRect(W / 2 - 2, 0, 4, H);
 
-                const lp = playerRect(true);
-                const rp = playerRect(false);
-                drawPlayer(lp.x, lp.y, lp.width, lp.height, '#55ddff');
-                drawPlayer(rp.x, rp.y, rp.width, rp.height, '#ff6688');
+                // Draw Particles
+                particles.forEach(p => {
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.life / 600;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                });
+
+                // Blink if invulnerable
+                if (performance.now() < invulnerableUntil && Math.floor(performance.now() / 100) % 2 === 0) {
+                    // skip drawing players
+                } else {
+                    const lp = playerRect(true);
+                    const rp = playerRect(false);
+                    drawPlayer(lp.x, lp.y, lp.width, lp.height, '#55ddff');
+                    drawPlayer(rp.x, rp.y, rp.width, rp.height, '#ff6688');
+                }
 
                 obstacles.forEach(ob => {
                     const c = ob.isLeftSide ? 'rgba(120,220,255,0.85)' : 'rgba(255,160,190,0.88)';
                     drawObstacle(ob.x, ob.y, ob.width, ob.height, c);
                 });
+
+                ctx.restore(); // End Shake
 
                 if (paused) {
                     ctx.fillStyle = 'rgba(0,0,0,0.35)';
@@ -619,8 +1054,16 @@
             }
 
             // Input
-            function toggleLeft() { leftLaneIndex = 1 - leftLaneIndex; }
-            function toggleRight() { rightLaneIndex = 1 - rightLaneIndex; }
+            function toggleLeft() {
+                leftLaneIndex = 1 - leftLaneIndex;
+                Sound.play('tap');
+                if (running && !gameOver) totalSwaps++;
+            }
+            function toggleRight() {
+                rightLaneIndex = 1 - rightLaneIndex;
+                Sound.play('tap');
+                if (running && !gameOver) totalSwaps++;
+            }
 
             window.addEventListener('keydown', (e) => {
                 if (e.repeat) return;
@@ -719,6 +1162,102 @@
             }
 
             runSelfTests();
+
+            // --- Helper Functions ---
+
+            function createExplosion(x, y, color) {
+                for (let i = 0; i < 12; i++) {
+                    particles.push({
+                        x, y,
+                        vx: (Math.random() - 0.5) * 8,
+                        vy: (Math.random() - 0.5) * 8,
+                        life: 600 + Math.random() * 200,
+                        color: color,
+                        size: 2 + Math.random() * 3
+                    });
+                }
+            }
+
+            function reviveGame() {
+                if (revivedUsed) return;
+                revivedUsed = true;
+
+                // Clear near obstacles
+                const playerY = H - Math.max(56, H * 0.08);
+                obstacles = obstacles.filter(ob => ob.y < playerY - 300); // clear bottom 300px
+
+                running = true;
+                gameOver = false;
+                invulnerableUntil = performance.now() + 2000;
+                lastTime = performance.now();
+                lastSpawnTime = lastTime; // Reset spawn timer to avoid instant flood
+
+                gameOverOverlay.classList.remove('visible');
+                setTimeout(() => gameOverOverlay.style.display = 'none', 300);
+
+                Sound.play('revive');
+            }
+
+            restartOverlayBtn.addEventListener('click', () => {
+                resetGame();
+            });
+
+            reviveBtn.addEventListener('click', () => {
+                // Simulate Ad
+                const originalText = reviveBtn.innerHTML;
+                reviveBtn.disabled = true;
+                reviveBtn.textContent = 'Loading Ad...';
+
+                setTimeout(() => {
+                    reviveBtn.textContent = 'Ad Playing (3s)...';
+                    // In a real game, show video SDK here
+                    setTimeout(() => {
+                        reviveGame();
+                        reviveBtn.textContent = originalText;
+                        reviveBtn.disabled = false;
+                    }, 2500);
+                }, 800);
+            });
+
+            const btnTwitter = document.getElementById('btnTwitter');
+            const btnWhatsapp = document.getElementById('btnWhatsapp');
+            const btnCopy = document.getElementById('btnCopy');
+            const shareMsgEl = document.getElementById('shareMsg');
+
+            function getShareText() {
+                // Cool share messages to encourage others
+                const msgs = [
+                    `My brain just split in two! Scored ${Math.floor(score)} in Split Focus! 🤯`,
+                    `Reflex check: Failed after ${Math.floor(score)} points. 😭 Can you beat me?`,
+                    `I scored ${Math.floor(score)} in a dual-lane panic attack. ⚡`,
+                    `Dual lanes, one brain, ${Math.floor(score)} points. #SplitFocus`
+                ];
+                return msgs[Math.floor(Math.random() * msgs.length)];
+            }
+
+            if (btnTwitter) btnTwitter.addEventListener('click', () => {
+                const text = getShareText();
+                const url = encodeURIComponent(window.location.href);
+                const fullText = encodeURIComponent(text + " Play here: ");
+                window.open(`https://twitter.com/intent/tweet?text=${fullText}&url=${url}&hashtags=SplitFocus,IndieGame`, '_blank');
+            });
+
+            if (btnWhatsapp) btnWhatsapp.addEventListener('click', () => {
+                const text = getShareText();
+                const url = window.location.href;
+                const fullText = encodeURIComponent(`*Split Focus Challenge!* 🎮\n\n${text}\n\nPlay here: ${url}`);
+                window.open(`https://wa.me/?text=${fullText}`, '_blank');
+            });
+
+            if (btnCopy) btnCopy.addEventListener('click', () => {
+                const text = `${getShareText()} Play here: ${window.location.href}`;
+                navigator.clipboard.writeText(text).then(() => {
+                    shareMsgEl.textContent = '✅ Copied to clipboard!';
+                    setTimeout(() => shareMsgEl.textContent = 'Share your score', 2000);
+                }).catch(() => {
+                    shareMsgEl.textContent = '❌ Copy failed';
+                });
+            });
 
             // Start loop
             requestAnimationFrame((t) => {
