@@ -443,7 +443,7 @@
             </div>
 
             <div id="footer">
-                <!-- 
+                <!--
                     Link updated to user's profile.
                 -->
                 <a href="https://buymeacoffee.com/bongquisitive" target="_blank" class="btn-coffee"
@@ -940,8 +940,13 @@
             }
 
             function render() {
-                ctx.setTransform(1, 0, 0, 1, 0, 0); // reset for clear
-                ctx.clearRect(0, 0, W, H);
+                // 1. Clear the entire canvas (physical pixels)
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // 2. Setup scaling for High DPI
+                const dpr = window.devicePixelRatio || 1;
+                ctx.scale(dpr, dpr);
 
                 // Shake Transform
                 let shakeX = 0;
@@ -951,26 +956,6 @@
                     shakeX = (Math.random() - 0.5) * mag;
                     shakeY = (Math.random() - 0.5) * mag;
                 }
-
-                // Re-apply scale for standard drawing
-                const dpr = window.devicePixelRatio || 1;
-                // We need to fetch current scale; previously handled in resize.
-                // Simplified: Just use the stored scale if we can, 
-                // but simpler is to just apply shake in the draw calls or wrap logic.
-                // Let's use save/restore.
-
-                // Actually, resizeCanvasNow sets transform. We should rely on that or reset it.
-                // Since resizeCanvasNow is called on resize, the context already has a transform.
-                // Let's just modify the current transform? No, simplest is to save/restore.
-
-                // Wait, clearRect ignores transform? No.
-                // Let's assume standard flow:
-
-                // 1. Clear (using full canvas dims)
-                ctx.save();
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.restore();
 
                 ctx.save();
                 // Apply Shake
