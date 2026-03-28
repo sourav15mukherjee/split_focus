@@ -49,6 +49,7 @@ const insightsEl = document.getElementById('insights');
 // Toolbar buttons
 const settingsBtn = document.getElementById('settingsBtn');
 const dashboardBtn = document.getElementById('dashboardBtn');
+const trainingBtn = document.getElementById('trainingBtn');
 const difficultySelect = document.getElementById('difficultySelect');
 
 // ─── Persisted Data ──────────────────────────────────────────────────────────
@@ -233,12 +234,12 @@ const POWERUP_DEFS = [
 ];
 
 let lastPowerUpTime = 0;
-const POWERUP_MIN_INTERVAL = 8000; // min 8s between power-ups
+const POWERUP_MIN_INTERVAL = 5000; // min 5s between power-ups
 
 function trySpawnPowerUp(now, timeSeconds) {
-    if (timeSeconds < 10) return; // no power-ups in first 10s
+    if (timeSeconds < 5) return; // no power-ups in first 5s
     if (now - lastPowerUpTime < POWERUP_MIN_INTERVAL) return;
-    if (Math.random() > 0.07) return; // ~7% chance per spawn cycle
+    if (Math.random() > 0.12) return; // ~12% chance per spawn cycle
 
     const def = POWERUP_DEFS[Math.floor(Math.random() * POWERUP_DEFS.length)];
     const isLeftSide = Math.random() < 0.5;
@@ -1067,6 +1068,49 @@ if (dashboardBtn) {
         initDashboard();
         showDashboard();
     });
+}
+
+// Training panel
+if (trainingBtn) {
+    trainingBtn.addEventListener('click', () => {
+        showTrainingPanel();
+    });
+}
+
+function showTrainingPanel() {
+    const panel = document.getElementById('trainingPanel');
+    if (!panel) return;
+    const content = panel.querySelector('.training-content');
+    if (!content) return;
+
+    const modes = getTrainingList();
+    const cardsHtml = modes.map(m => `
+        <div class="training-option" data-mode="${m.id}">
+            <h4>${m.name}</h4>
+            <p>${m.desc}${m.duration ? ' (' + Math.round(m.duration / 1000) + 's)' : ''}</p>
+        </div>
+    `).join('');
+
+    content.innerHTML = `
+        <h2 style="margin:0; font-size:20px; text-align:center;">Training Modes</h2>
+        <p style="font-size:12px; color:var(--muted); text-align:center; margin:0;">Structured sessions targeting specific cognitive skills</p>
+        <div class="training-selector">${cardsHtml}</div>
+        <button id="trainingClose" style="width:100%;padding:12px;font-weight:600;">Close</button>
+    `;
+
+    content.querySelectorAll('.training-option').forEach(card => {
+        card.addEventListener('click', () => {
+            const modeId = card.dataset.mode;
+            panel.classList.remove('visible');
+            window.startTrainingSession(modeId);
+        });
+    });
+
+    content.querySelector('#trainingClose').addEventListener('click', () => {
+        panel.classList.remove('visible');
+    });
+
+    panel.classList.add('visible');
 }
 
 // Difficulty selector
