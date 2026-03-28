@@ -228,14 +228,14 @@ function drawRTChart(canvas, sessions) {
 
 function drawAAIChart(canvas, sessions) {
     const aais = sessions.slice().reverse().map(s => s.aai || 0);
-    // AAI ranges -1 to +1, but typically small
     const absMax = Math.max(0.2, ...aais.map(Math.abs));
-    drawLineChart(canvas, aais, '#ffcc55', -absMax, absMax);
 
-    // Draw center line (0)
+    // Setup canvas once, draw center line first, then data on top
     const setup = setupCanvas(canvas);
-    if (!setup) return;
+    if (!setup || aais.length === 0) return;
     const { ctx, w, h } = setup;
+
+    // Center line (0)
     ctx.strokeStyle = 'rgba(255,255,255,0.15)';
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 4]);
@@ -244,12 +244,40 @@ function drawAAIChart(canvas, sessions) {
     ctx.lineTo(w - 5, h / 2);
     ctx.stroke();
     ctx.setLineDash([]);
+
+    // Data line (draw manually instead of calling drawLineChart which re-setups canvas)
+    const pad = { top: 10, bottom: 20, left: 5, right: 5 };
+    const plotW = w - pad.left - pad.right;
+    const plotH = h - pad.top - pad.bottom;
+    const yMin = -absMax, yMax = absMax;
+    const range = yMax - yMin || 1;
+
+    ctx.strokeStyle = '#ffcc55';
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    aais.forEach((val, i) => {
+        const x = pad.left + (i / Math.max(1, aais.length - 1)) * plotW;
+        const y = pad.top + plotH - ((val - yMin) / range) * plotH;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffcc55';
+    aais.forEach((val, i) => {
+        const x = pad.left + (i / Math.max(1, aais.length - 1)) * plotW;
+        const y = pad.top + plotH - ((val - yMin) / range) * plotH;
+        ctx.beginPath();
+        ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+    });
 }
 
 export function showDashboard() {
     const panel = document.getElementById('dashboardPanel');
     if (panel) {
-        initDashboard();
         panel.classList.add('visible');
+        // Init after visible so canvas getBoundingClientRect returns real sizes
+        requestAnimationFrame(() => initDashboard());
     }
 }
